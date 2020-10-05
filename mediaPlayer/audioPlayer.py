@@ -1,5 +1,6 @@
 import pygame
 import socket
+import os
 
 
 audioDict = {}
@@ -12,7 +13,12 @@ INCOMING_IP = ""
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind((UDP_IP, UDP_PORT))
 
-
+globalFilepath = "/home/pi/mediaPlayer"
+try:
+    globalFilepath = os.path.dirname(os.path.abspath(__file__))
+    print globalFilepath
+except:
+    pass
 
 def RunDevice():
     
@@ -20,10 +26,10 @@ def RunDevice():
     pygame.mixer.init()
 
     # Load the audio files
-    redAudio = pygame.mixer.Sound("mediaFiles_audio/001_red.wav")
-    yellowAudio = pygame.mixer.Sound("mediaFiles_audio/002_yellow.wav")
-    blueAudio = pygame.mixer.Sound("mediaFiles_audio/003_blue.wav")
-    greenAudio = pygame.mixer.Sound("mediaFiles_audio/004_green.wav")
+    redAudio = pygame.mixer.Sound(globalFilepath + "/mediaFiles_audio/001_red.wav")
+    yellowAudio = pygame.mixer.Sound(globalFilepath + "/mediaFiles_audio/002_yellow.wav")
+    blueAudio = pygame.mixer.Sound(globalFilepath + "/mediaFiles_audio/003_blue.wav")
+    greenAudio = pygame.mixer.Sound(globalFilepath + "/mediaFiles_audio/004_green.wav")
     
     audioDict["Gryffindor"] = redAudio
     audioDict["Hufflepuff"] = yellowAudio
