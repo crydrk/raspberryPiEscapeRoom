@@ -3,7 +3,7 @@ import socket
 import os
 
 
-mediaDict = {}
+audioDict = {}
 
 # UPD setup
 UDP_PORT = 2522
@@ -22,36 +22,27 @@ except:
 
 def RunDevice():
     
-    # Initialize the mixer, and immediately quit
-    # This is a workaround suggested by bluegalaxy.info
-    pygame.init()
-    pygame.mixer.quit()
-    clock = pygame.time.Clock()
-    movie = pygame.movie.Movie(globalFilepath + "/mediaFiles_video/test.mpg")
-    screen = pygame.display.set_mode(movie.get_size())
-    movie_screen = pygame.Surface(movie.get_size()).convert()
-    
-    movie.set_display(movie_screen)
-    movie.play()
-    
-    playing = True
-    while playing:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                movie.stop()
-                playing = False
-                
-    screen.blit(movie_screen, (0,0))
-    pygame.display.update()
-    clock.tick(FPS)
-    
-    pygame.quit()
+    # Initialize the mixer
+    pygame.mixer.init()
 
-    """
+    # Load the audio files
+    redAudio = pygame.mixer.Sound(globalFilepath + "/mediaFiles_audio/001_red.wav")
+    yellowAudio = pygame.mixer.Sound(globalFilepath + "/mediaFiles_audio/002_yellow.wav")
+    blueAudio = pygame.mixer.Sound(globalFilepath + "/mediaFiles_audio/003_blue.wav")
+    greenAudio = pygame.mixer.Sound(globalFilepath + "/mediaFiles_audio/004_green.wav")
+    
+    audioDict["Gryffindor"] = redAudio
+    audioDict["Hufflepuff"] = yellowAudio
+    audioDict["Ravenclaw"] = blueAudio
+    audioDict["Slytherin"] = greenAudio
+
+    # Short delay while running processor to allow for loading
+    pygame.time.delay(3000)
+
+    
     while True:
         data, addr = sock.recvfrom(1024)
         ReceiveData(data, addr)
-        """
 
 def ReceiveData(data, addr):
     print data
@@ -83,3 +74,24 @@ def ReceiveData(data, addr):
     
 RunDevice()
     
+
+# Test plays
+pygame.mixer.Sound.play(redAudio)
+
+while pygame.mixer.Channel(0).get_busy() == True:
+    continue
+    
+pygame.mixer.Sound.play(yellowAudio)
+
+while pygame.mixer.Channel(0).get_busy() == True:
+    continue
+    
+pygame.mixer.Sound.play(blueAudio)
+
+while pygame.mixer.Channel(0).get_busy() == True:
+    continue
+
+pygame.mixer.Sound.play(greenAudio)
+
+while pygame.mixer.Channel(0).get_busy() == True:
+    continue

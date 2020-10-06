@@ -2,6 +2,8 @@ import pygame
 import socket
 import os
 
+from subprocess import Popen
+
 
 mediaDict = {}
 
@@ -10,8 +12,8 @@ UDP_PORT = 2522
 UDP_IP = ""
 INCOMING_IP = ""
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.bind((UDP_IP, UDP_PORT))
+#sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+#sock.bind((UDP_IP, UDP_PORT))
 
 globalFilepath = "/home/pi/mediaPlayer"
 try:
@@ -22,30 +24,9 @@ except:
 
 def RunDevice():
     
-    # Initialize the mixer, and immediately quit
-    # This is a workaround suggested by bluegalaxy.info
-    pygame.init()
-    pygame.mixer.quit()
-    clock = pygame.time.Clock()
-    movie = pygame.movie.Movie(globalFilepath + "/mediaFiles_video/test.mpg")
-    screen = pygame.display.set_mode(movie.get_size())
-    movie_screen = pygame.Surface(movie.get_size()).convert()
+    moviePath = globalFilepath + "/mediaFiles_video/magicShowStart.mp4"
     
-    movie.set_display(movie_screen)
-    movie.play()
-    
-    playing = True
-    while playing:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                movie.stop()
-                playing = False
-                
-    screen.blit(movie_screen, (0,0))
-    pygame.display.update()
-    clock.tick(FPS)
-    
-    pygame.quit()
+    omxp = Popen(['omxplayer', moviePath])
 
     """
     while True:
