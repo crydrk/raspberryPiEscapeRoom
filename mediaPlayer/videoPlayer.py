@@ -1,6 +1,7 @@
 import pygame
 import socket
 import os
+import select
 
 import subprocess
 from subprocess import Popen
@@ -32,26 +33,17 @@ def RunDevice():
     screen = pygame.display.set_mode((w, h), pygame.FULLSCREEN)
     pygame.display.flip()
     
+    pygame.mouse.set_visible(False)
+    
     videoDict["test"] = globalFilepath + "/mediaFiles_video/magicShowStart.mp4"
     
     while True:
-        WaitForDataOrQuit()
+        r, _, _ = select.select([sock], [], [])
+        if r:
+            data, addr = sock.recvfrom(1024)
+            ReceiveData(data, addr)
                     
         sleep(1)
-        
-def WaitForDataOrQuit():
-    
-    data, addr = sock.recvfrom(1024)
-    ReceiveData(data, addr)
-    
-    # Check for quit
-    for event in pygame.event.get():
-        if event.type == QUIT:
-            return
-        elif event.type == KEYDOWN:
-            if event.key == "escape":
-                pygame.quit()
-                return
 
 def ReceiveData(data, addr):
     print data
@@ -63,7 +55,16 @@ def ReceiveData(data, addr):
         print "trying to verify"
         sock.sendto("good", (INCOMING_IP, UDP_PORT))
         
+    if data == "quit":
+        pygame.quit()
+        exit()
+        
+    if data == "kill":
+        os.system('killall omxplayer.bin')
+        
     if data in videoDict.keys():
+        os.system('killall omxplayer.bin')
+        
         # Play the video if it matches the incoming message
         dur = subprocess.check_output("avconv -i " + videoDict[data] + " 2>&1 | grep Duration | cut -d ' ' -f 4 | sed s/,//", shell=True)
     
@@ -75,17 +76,7 @@ def ReceiveData(data, addr):
         
         omxp = Popen(['omxplayer', videoDict[data]])
         
-        print "starting sleep"
-        sleep(seconds)
-            
-        # Workaround to remove any data that came in during video
-        sock.setblocking(0)
-        while 1:
-            try:
-                throwaway = sock.recvfrom(1024)
-            except:
-                break
-        sock.setblocking(1)
+        return
     
     
     
