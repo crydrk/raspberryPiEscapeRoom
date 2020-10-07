@@ -7,16 +7,15 @@ from subprocess import Popen
 
 from time import sleep
 
-
 mediaDict = {}
 
 # UPD setup
-UDP_PORT = 2522
+UDP_PORT = 1885
 UDP_IP = ""
 INCOMING_IP = ""
 
-#sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-#sock.bind((UDP_IP, UDP_PORT))
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock.bind((UDP_IP, UDP_PORT))
 
 globalFilepath = "/home/pi/mediaPlayer"
 try:
@@ -24,51 +23,35 @@ try:
     print globalFilepath
 except:
     pass
+    
+videoDict = {}
 
 def RunDevice():
     
-    dur = subprocess.check_output("avconv -i " + globalFilepath + "/mediaFiles_video/magicShowStart.mp4" + " 2>&1 | grep Duration | cut -d ' ' -f 4 | sed s/,//", shell=True)
+    (w, h) = (1200, 900)
+    screen = pygame.display.set_mode((w, h), pygame.FULLSCREEN)
+    pygame.display.flip()
     
-    # dur's time format will be: 00:02:21.18
+    videoDict["test"] = globalFilepath + "/mediaFiles_video/magicShowStart.mp4"
     
-    minutes = dur.split(':')[1]
-    seconds = dur.split('.')[0].split(':')[2]
-    
-    print "minutes: " + minutes
-    print "seconds: " + seconds
-    
-    milliseconds = int(minutes) * 60 * 1000 + int(seconds) * 1000
-    milliseconds += 1000 # Some extra leeway for loading - this number doesn't need to be spot on
-    
-    print milliseconds / 1000
-    print milliseconds
-    
-    moviePath = globalFilepath + "/mediaFiles_video/magicShowStart.mp4"
-    omxp = Popen(['omxplayer', moviePath])
-    
-    print "starting sleep"
-    sleep(milliseconds / 1000)
-    print "ending sleep"
-    
-    moviePath = globalFilepath + "/mediaFiles_video/magicShowStart.mp4"
-    omxp = Popen(['omxplayer', moviePath])
-    
-    #VIDEO_PATH = globalFilepath + "/mediaFiles_video/magicShowStart.mp4"
-    #player = OMXPlayer(VIDEO_PATH)
-    
-    sleep(30)
-    
-    player.quit()
-    
-    #moviePath = globalFilepath + "/mediaFiles_video/magicShowStart.mp4"
-    
-    #omxp = Popen(['omxplayer', moviePath])
-
-    """
     while True:
-        data, addr = sock.recvfrom(1024)
-        ReceiveData(data, addr)
-        """
+        WaitForDataOrQuit()
+                    
+        sleep(1)
+        
+def WaitForDataOrQuit():
+    
+    data, addr = sock.recvfrom(1024)
+    ReceiveData(data, addr)
+    
+    # Check for quit
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            return
+        elif event.type == KEYDOWN:
+            if event.key == "escape":
+                pygame.quit()
+                return
 
 def ReceiveData(data, addr):
     print data
@@ -80,14 +63,22 @@ def ReceiveData(data, addr):
         print "trying to verify"
         sock.sendto("good", (INCOMING_IP, UDP_PORT))
         
-    if data in audioDict.keys():
-        # Play the audio if it matches the incoming message
-        pygame.mixer.Sound.play(audioDict[data])
+    if data in videoDict.keys():
+        # Play the video if it matches the incoming message
+        dur = subprocess.check_output("avconv -i " + videoDict[data] + " 2>&1 | grep Duration | cut -d ' ' -f 4 | sed s/,//", shell=True)
+    
+        # dur's time format will be: 00:02:21.18
+        minutes = dur.split(':')[1]
+        seconds = dur.split('.')[0].split(':')[2]
         
-        while pygame.mixer.Channel(0).get_busy() == True:
-            continue
+        seconds = int(minutes) * 60 + int(seconds) + 1 # Some extra leeway for loading - this number doesn't need to be spot on
+        
+        omxp = Popen(['omxplayer', videoDict[data]])
+        
+        print "starting sleep"
+        sleep(seconds)
             
-        # Workaround to remove any data that came in during audio
+        # Workaround to remove any data that came in during video
         sock.setblocking(0)
         while 1:
             try:
